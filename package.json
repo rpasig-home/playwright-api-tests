@@ -1,0 +1,19 @@
+{
+  "name": "api-test-framework",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:api": "cucumber-js",
+    "test:smoke": "cucumber-js --tags @smoke",
+    "test:regression": "cucumber-js --tags @regression"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0",
+    "@playwright/test": "^1.0.0",
+    "@types/node": "^22.0.0",
+    "ajv": "^8.0.0",
+    "dotenv": "^16.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}
