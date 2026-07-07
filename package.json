@@ -2,10 +2,15 @@
   "name": "api-test-framework",
   "version": "1.0.0",
   "scripts": {
-    "test": "cucumber-js",
-    "test:api": "cucumber-js",
-    "test:smoke": "cucumber-js --tags @smoke",
-    "test:regression": "cucumber-js --tags @regression"
+    "test:c": "cucumber-js",
+    "test:c_api": "cucumber-js",
+    "test:c_smoke": "cucumber-js --tags @smoke",
+    "test:regression": "cucumber-js --tags @regression",
+
+    "test:p": "playwright test",
+    "test:p_api": "playwright test",
+    "test:p_ui": "playwright test --ui",
+    "test:p_report": "playwright show-report"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.0.0",
