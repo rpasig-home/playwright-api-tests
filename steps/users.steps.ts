@@ -1,13 +1,15 @@
-import { Given, When, Then } from '@cucumber/cucumber';
-import { expect, APIResponse } from '@playwright/test';
+import { createBdd } from 'playwright-bdd';
+import { expect, test } from './fixtures';
 import Ajv from 'ajv';
-import { ApiWorld } from '../support/world';
+import { APIResponse } from '@playwright/test';
 import userSchema from '../schemas/user.schema.json';
 
+const { Given, When, Then } = createBdd(test);
 const ajv = new Ajv();
 
 async function parseResponseBody(response: APIResponse) {
   const contentType = response.headers()['content-type'] || '';
+
   if (!contentType.includes('application/json')) {
     return undefined;
   }
@@ -15,81 +17,107 @@ async function parseResponseBody(response: APIResponse) {
   return await response.json();
 }
 
-When('I request the list of users', async function (this: ApiWorld) {
-  this.response = await this.usersApi.listUsers();
-  this.responseBody = await parseResponseBody(this.response);
+When('I request the list of users', async ({ usersApi, $testInfo }) => {
+  const response = await usersApi.listUsers();
+  const responseBody = await parseResponseBody(response);
+
+  $testInfo.attach('response-body', {
+    body: JSON.stringify(responseBody, null, 2),
+    contentType: 'application/json'
+  });
+
+  $testInfo['response'] = response;
+  $testInfo['responseBody'] = responseBody;
 });
 
-When('I request user with id {string}', async function (this: ApiWorld, userId: string) {
-  this.response = await this.usersApi.getUser(userId);
-  this.responseBody = await parseResponseBody(this.response);
+When('I request user with id {string}', async ({ usersApi, $testInfo }, userId: string) => {
+  const response = await usersApi.getUser(userId);
+  const responseBody = await parseResponseBody(response);
+
+  $testInfo.attach('response-body', {
+    body: JSON.stringify(responseBody, null, 2),
+    contentType: 'application/json'
+  });
+
+  $testInfo['response'] = response;
+  $testInfo['responseBody'] = responseBody;
 });
 
-Given('I have a valid user payload', function (this: ApiWorld) {
-  this.payload = {
+Given('I have a valid user payload', async ({$testInfo}) => {
+  $testInfo['payload'] = {
     name: 'Riche',
     job: 'SDET'
   };
 });
 
-When('I send a request to create the user', async function (this: ApiWorld) {
-  this.response = await this.usersApi.createUser(this.payload);
-  this.responseBody = await parseResponseBody(this.response);
+When('I send a request to create the user', async ({ usersApi, $testInfo }) => {
+  const payload = $testInfo['payload'];
+
+  const response = await usersApi.createUser(payload);
+  const responseBody = await parseResponseBody(response);
+
+  $testInfo['response'] = response;
+  $testInfo['responseBody'] = responseBody;
 });
 
-Given('I have an updated user payload', function (this: ApiWorld) {
-  this.payload = {
+Given('I have an updated user payload', async ({$testInfo}) => {
+  $testInfo['payload'] = {
     name: 'Riche Updated',
     job: 'Senior SDET'
   };
 });
 
-When('I send a request to update user with id {string}', async function (this: ApiWorld, userId: string) {
-  this.response = await this.usersApi.updateUser(userId, this.payload);
-  this.responseBody = await parseResponseBody(this.response);
+When('I send a request to update user with id {string}', async ({ usersApi, $testInfo }, userId: string) => {
+  const payload = $testInfo['payload'];
+
+  const response = await usersApi.updateUser(userId, payload);
+  const responseBody = await parseResponseBody(response);
+
+  $testInfo['response'] = response;
+  $testInfo['responseBody'] = responseBody;
 });
 
-When('I send a request to delete user with id {string}', async function (this: ApiWorld, userId: string) {
-  this.response = await this.usersApi.deleteUser(userId);
+When('I send a request to delete user with id {string}', async ({ usersApi, $testInfo }, userId: string) => {
+  const response = await usersApi.deleteUser(userId);
+
+  $testInfo['response'] = response;
 });
 
-Then('the response status should be {int}', async function (this: ApiWorld, statusCode: number) {
-  const actualStatus = this.response.status();
-  let bodyText = '';
-
-  try {
-    if (this.responseBody !== undefined) {
-      bodyText = JSON.stringify(this.responseBody);
-    } else {
-      bodyText = await this.response.text();
-    }
-  } catch (error) {
-    bodyText = `Unable to read response body: ${String(error)}`;
-  }
-
-  expect(actualStatus, `Expected HTTP ${statusCode} but got ${actualStatus}. Response body: ${bodyText}`).toBe(statusCode);
+Then('the response status should be {int}', async ({ $testInfo}, statusCode: number) => {
+  const response = $testInfo['response'] as APIResponse;
+  expect(response.status()).toBe(statusCode);
 });
 
-Then('the response should contain users', function (this: ApiWorld) {
-  expect(Array.isArray(this.responseBody)).toBeTruthy();
-  expect(this.responseBody.length).toBeGreaterThan(0);
+Then('the response should contain users', async ({$testInfo}) => {
+  const responseBody = $testInfo['responseBody'];
+
+  expect(Array.isArray(responseBody)).toBeTruthy();
+  expect(responseBody.length).toBeGreaterThan(0);
 });
 
-Then('the user response should match the user schema', function (this: ApiWorld) {
+Then('the user response should match the user schema', async ({$testInfo}) => {
+  const responseBody = $testInfo['responseBody'];
+
   const validate = ajv.compile(userSchema);
-  const isValid = validate(this.responseBody);
+  const isValid = validate(responseBody);
 
   expect(isValid, JSON.stringify(validate.errors, null, 2)).toBeTruthy();
 });
 
-Then('the response should contain the created user details', function (this: ApiWorld) {
-  expect(this.responseBody.name).toBe(this.payload.name);
-  expect(this.responseBody.job).toBe(this.payload.job);
-  expect(this.responseBody.id).toBeTruthy();
+Then('the response should contain the created user details', async ({$testInfo}) => {
+  const responseBody = $testInfo['responseBody'];
+  const payload = $testInfo['payload'];
+
+  expect(responseBody.name).toBe(payload.name);
+  expect(responseBody.job).toBe(payload.job);
+  expect(responseBody.id).toBeTruthy();
 });
 
-Then('the response should contain the updated user details', function (this: ApiWorld) {
-  expect(this.responseBody.name).toBe(this.payload.name);
-  expect(this.responseBody.job).toBe(this.payload.job);
-  expect(this.responseBody.id).toBeTruthy();
+Then('the response should contain the updated user details', async ({$testInfo}) => {
+  const responseBody = $testInfo['responseBody'];
+  const payload = $testInfo['payload'];
+
+  expect(responseBody.name).toBe(payload.name);
+  expect(responseBody.job).toBe(payload.job);
+  expect(responseBody.id).toBeTruthy();
 });

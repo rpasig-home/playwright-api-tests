@@ -2,22 +2,25 @@
   "name": "api-test-framework",
   "version": "1.0.0",
   "scripts": {
-    "test:c": "cucumber-js",
-    "test:c_api": "cucumber-js",
-    "test:c_smoke": "cucumber-js --tags @smoke",
-    "test:regression": "cucumber-js --tags @regression",
-
-    "test:p": "playwright test",
-    "test:p_api": "playwright test",
-    "test:p_ui": "playwright test --ui",
-    "test:p_report": "playwright show-report"
+    "bddgen": "bddgen",
+    "test": "npm run bddgen && playwright test",
+    "test:api": "npm run bddgen && playwright test",
+    "test:ui": "npm run bddgen && playwright test --ui",
+    "test:smoke": "npm run bddgen && playwright test --grep @smoke",
+    "test:regression": "npm run bddgen && playwright test --grep @regression",
+    "test:report": "playwright show-report",
+    "allure:generate": "allure generate ./allure-results --clean -o ./allure-report",
+    "allure:open": "allure open ./allure-report"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^11.0.0",
     "@playwright/test": "^1.0.0",
     "@types/node": "^22.0.0",
     "ajv": "^8.0.0",
+    "allure-commandline": "^2.43.0",
+    "allure-playwright": "^3.10.2",
     "dotenv": "^16.0.0",
+    "playwright-bdd": "^9.2.0",
     "ts-node": "^10.0.0",
     "typescript": "^5.0.0"
   }
